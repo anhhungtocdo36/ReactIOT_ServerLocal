@@ -121,6 +121,7 @@ io.on('connection', function (socket) {
     socketLocalPage.push(socket);
     socket.on('switch', function (body) {
         //client.publish('ServerLocal/Control', JSON.stringify(body));
+        console.log("switch");
         for (var i = 0; i < clients.length; i++)
             if (clients[i][1] == body['ID']) {
                 var jsonControl = { "Status": body['Status'].toString() };
@@ -163,19 +164,24 @@ client.on('message', function (topic, message) {
             for (var i = 0; i < clients.length; i++)
                 if (clients[i][1] == json['ID']) {
                     var jsonControl = { "Status": json['Status'].toString() };
-                    clients[i][0].send(JSON.stringify(jsonControl));
-                }
+                    clients[i][0].send(JSON.stringify(jsonControl), function(err,res){
+                        if (err) throw err;
+                    });
+            }
             break;
         case "ServerLocal/CheckID":
-            for (var i = 0; i < clients.length; i++)
-                var fCheck = false;
+        var fCheck = false;
+        for (var i = 0; i < clients.length; i++)
             if (clients[i][1] == json['ID']) {
-                client.publish('Server/CheckID', json['ID']);
+                client.publish('Server/CheckID', message);
                 fCheck = true;
+                console.log("Matched ID");
                 break;
             }
-            if (!fCheck)
-                client.publish('Server/CheckID', 'ID not matched');
+        if (!fCheck){
+            client.publish('Server/CheckID', 'ID not matched');
+            console.log("Not Matched");
+        }
             break;
     }
 })
@@ -213,9 +219,9 @@ function UpdateCurrentToServer(ID, value) {
     
 }
 
-function UpdataPowerToServer(ID, value) {
+function UpdatePowerToServer(ID, value) {
     var dataPower = { "ID": ID, "time": new Date().toString(), "value": value };
-    client.publish('Server/Power', JSON.stringify(datapower));
+    client.publish('Server/Power', JSON.stringify(dataPower));
 }
 
 ws.on('connection', function (socket, req) {
@@ -226,11 +232,13 @@ ws.on('connection', function (socket, req) {
         console.log('received: %s', data);
     });
 
+    /*
     socket.on('close', function () {
         //var index = clients.indexOf(socket);
         //clients.splice(index, 1);
         console.log('disconnected');
     });
+    */
 
     socket.on('message', function (message) {
         console.log(message);
@@ -246,7 +254,7 @@ ws.on('connection', function (socket, req) {
                     }
                 if (fAdd || (clients.length == 0)) {
                     clients.push(newData);
-                    console.log('Add a new Client with ID: ' + json['message']);
+                    console.log('Number of Client: ' + clients.length);
 
                 }
                 break;
