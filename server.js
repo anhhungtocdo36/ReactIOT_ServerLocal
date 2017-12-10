@@ -21,7 +21,7 @@ db.defaults({ room: [], roomDetail: [], device: [] })
     .write();
 
 var app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 var server = http.createServer(requestHandler);
 var ws = new WebSocket.Server({ server });
