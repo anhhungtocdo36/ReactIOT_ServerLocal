@@ -167,21 +167,23 @@ client.on('message', function (topic, message) {
                     clients[i][0].send(JSON.stringify(jsonControl), function(err,res){
                         if (err) throw err;
                     });
-            }
+
+            	}
+            client.publish('Server/Control',message);
             break;
         case "ServerLocal/CheckID":
-        var fCheck = false;
-        for (var i = 0; i < clients.length; i++)
-            if (clients[i][1] == json['ID']) {
-                client.publish('Server/CheckID', message);
-                fCheck = true;
-                console.log("Matched ID");
-                break;
-            }
-        if (!fCheck){
-            client.publish('Server/CheckID', 'ID not matched');
-            console.log("Not Matched");
-        }
+        	var fCheck = false;
+        	for (var i = 0; i < clients.length; i++)
+            	if (clients[i][1] == json['ID']) {
+                	client.publish('Server/CheckID', message);
+                	fCheck = true;
+                	console.log("Matched ID");
+                	break;
+            	}
+        	if (!fCheck){
+            	client.publish('Server/CheckID', 'ID not matched');
+            	console.log("Not Matched");
+        	}
             break;
     }
 })
@@ -211,17 +213,22 @@ function UpdataStatusToServer(ID, status) {
 }
 
 function UpdateCurrentToServer(ID, value) {
-    var dataCurrent = { "ID": ID, "value": value };
+    var dataCurrent = { "ID": ID, "value": Math.random()+4 };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
-    socketLocalPage.forEach(function(data){
+    /*socketLocalPage.forEach(function(data){
         data.emit('current', dataCurrent);
-    })
+    })*/
     
 }
 
+// setInterval(function(){
+// 	var dataCurrent = { "ID": 4060259, "value": Math.random()+4 };
+// 	client.publish('Server/Current', JSON.stringify(dataCurrent));
+// },1000);
+
 function UpdatePowerToServer(ID, value) {
-    var dataPower = { "ID": ID, "time": new Date().toString(), "value": value };
-    client.publish('Server/Power', JSON.stringify(dataPower));
+    var dataPower = { "ID": ID, "time": new Date().toUTCString(), "value": value };
+    //client.publish('Server/Power', JSON.stringify(dataPower));
 }
 
 ws.on('connection', function (socket, req) {
@@ -232,13 +239,20 @@ ws.on('connection', function (socket, req) {
         console.log('received: %s', data);
     });
 
-    /*
     socket.on('close', function () {
-        //var index = clients.indexOf(socket);
-        //clients.splice(index, 1);
+        var index = -1;
+        for (var i=0;i<clients.length;i++)
+        	if (clients[i][0]==socket){
+        		index = i;
+        		break;
+        	}
+        if (index==-1) 
+        	return;
+        else 
+        	clients.splice(index, 1);
         console.log('disconnected');
     });
-    */
+    
 
     socket.on('message', function (message) {
         console.log(message);
@@ -260,15 +274,15 @@ ws.on('connection', function (socket, req) {
                 break;
             case 'UpdateStatus':
                 console.log('Update Status from device ID: ' + json['message']['ID']);
-                UpdataStatusToServer(json['message']['ID'],json['message']);
+                UpdataStatusToServer(json['message']['ID'],json['message']['status']);
                 break;
             case 'UpdateCurrent':
-                console.log('Update Current from device ID: ' + json['message']['ID']);
+                console.log('Update Current from device ID: ' + json['message']['ID'].toString());
                 UpdateCurrentToServer(json['message']['ID'], json['message']['value']);
                 break;
             case 'UpdatePower':
                 console.log('Update Power from device ID: ' + json['message']['ID']);
-                UpdatePowerToServer(json['message']['ID'], json['message']['value']);
+              	UpdatePowerToServer(json['message']['ID'], json['message']['value']);
                 break;
         }
     })
