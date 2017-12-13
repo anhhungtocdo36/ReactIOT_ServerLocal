@@ -5,6 +5,14 @@ html, body
 *
     font-family: 'Roboto', sans-serif
 
+@keyframes fadein 
+    from
+        margin-top: -20px
+        opacity: 0 
+    to
+        opacity: 1
+        margin-top: 0
+
 #content 
     position: absolute
     width: 100%
@@ -15,6 +23,7 @@ html, body
         background-attachment: fixed
         background-size: cover
         background-repeat: no-repeat
+        min-height: 100%
 
 a
     text-decoration: none
@@ -26,6 +35,7 @@ a
     height: 50px
     background: #fff
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1)
+    z-index: 10000
     a
         display: block
     h1
@@ -36,14 +46,17 @@ a
         font-size: 1.5em
     h1, img
         float: left
-    .logout
-        position: relative
+    .logout, .toggleAddRoom, .toggleAddDevice
         float: right
         line-height: 50px
         padding: 0 20px
         font-size: 1.1em
         cursor: pointer
+        user-select: none
+    .logout
+        position: relative
         transition: 0.3s ease-in-out
+        z-index: 1
         &:before
             content: ""
             position: absolute
@@ -64,6 +77,9 @@ a
                 
 h2
     text-align: center
+    font-size: 1.5em
+    text-decoration: underline
+    font-style: italic
 
 .devices
     display: flex
@@ -72,6 +88,7 @@ h2
         padding: 10px
         width: 100/3*1%
         box-sizing: border-box
+        animation: fadein 1s
         .info
             padding: 20px
             border-radius: 10px
@@ -93,6 +110,13 @@ h2
                 text-align: right
             .row > span
                 float: left
+    .delete
+        cursor: pointer
+        margin: 0 auto
+        background: red
+        color: #fff
+        padding: 5px 20px
+        border-radius: 10px
 
 .toggle
     padding: 5px 0
@@ -106,7 +130,7 @@ h2
         height: 100%
         width: 60px
         float: right
-        background: #F44336
+        background: #2196F3
         border-radius: 20px
         cursor: pointer
         transition: 0.2s ease-in-out
@@ -120,12 +144,18 @@ h2
             background: #fff
             transition: inherit
         &.off
-            background: #2196F3
+            background: #F44336
             .toggle-button
                 left: calc(100% - 30px)
 
 .chart
     width: 100%
+
+.loading
+    text-align: center
+    font-size: 1.2em
+    width: 100%
+    padding: 50px 0
 
 @media screen and (max-width: 960px)
     .devices
@@ -139,3 +169,6 @@ h2
 
 @import 'rooms'
 @import 'login'
+@import 'form'
+
+

@@ -2,34 +2,34 @@ import React from 'react'
 import axios from 'axios'
 import Chart from 'chart.js'
 import openSocket from 'socket.io-client';
-const socket = openSocket('http://localhost:3000/');
+const socket = openSocket(API_URL);
 
 export default class Devices extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { devices: [] , current: new Array(49).fill(0)};
+        this.state = { current: [] };
+        this.devices = [];
+        this.dataFetched = false;
         this.fetchData = this.fetchData.bind(this);
         this.updateData = this.updateData.bind(this);
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.fetchData();
         document.title = "Thiết bị";
-        let self = this;
-        socket.on('current', (data) => {
-            this.setState((prevState, props) => ({
-                current: [...prevState.current.slice(-99), data]
-            }));
-        })
     }
 
     fetchData() {
         var self = this;
-        axios.get('http://localhost:3000/db/device/'+this.props.match.params.id, {
+        axios.get(API_URL + 'db/device/'+this.props.match.params.id, {
                 responseType: 'json'
             })
             .then(function (response) {
-                self.setState({ devices: response.data });
+                var data = response.data;
+                self.devices = data;
+                self.dataFetched = true;
+                self.forceUpdate();
+                socket.emit('subscribe', data.map(e => (e.id)));
             })
             .catch(function (error) {
                 console.log(error);
@@ -38,12 +38,13 @@ export default class Devices extends React.Component {
 
     updateData(message, data) {
         socket.emit('switch', data);
+        console.log('Send HTTP: ' + data);
     }
 
     render() {
-        const item = this.state.devices.map((e, i) => 
-            <Device_item key={i} _id={e.id} name={e.name} status={e.status} current={this.state.current.filter(t => t.ID==e.id)} updateData={this.updateData}/>
-        );
+        const item = this.devices.length ? this.devices.map((e, i) => 
+            <Device_item key={i} _id={e.id} name={e.name} status={e.status} power={{ value: e.value.reverse(), date: e.date.reverse()}} updateData={this.updateData}/>
+        ) : <div className="loading">{this.dataFetched ? "Không có thiết bị" : "Đang tải..."}</div>;
         return (
             <div>
                 <h2>{this.props.match.params.name}</h2>
@@ -53,12 +54,15 @@ export default class Devices extends React.Component {
             </div>
         )
     }
-} location
+}
 
 class Device_item extends React.Component {
     constructor(props) {
         super(props);
+        this.state = { current: new Array(50).fill(0) }
         this.switch = this.switch.bind(this);
+        this.drawCurrent = this.drawCurrent.bind(this);
+        this.delete = this.delete.bind(this);
     }
 
     switch(status) {
@@ -67,16 +71,59 @@ class Device_item extends React.Component {
             ID: parseInt(self.props._id),
             Status: status? '1':'0'
         });
-                
     }
 
-    componentWillUpdate() {
-        var self = this;
+    componentDidMount() {
+        let self = this;
+        socket.on('current', (data) => {
+            this.setState(prev => {
+                if(data.ID == self.props._id)
+                    return { current: [data.value, ...prev.current.slice(0, 48)] }
+                else
+                    return
+            });
+        })
+        var ctx = this.canvas2.getContext('2d');
+        var labels = this.props.power.date.map((e, i) => {
+            return this.props.power.date.length - i + ' days ago';
+        });
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: self.props.power.value,
+                    borderWidth: 1,
+                    backgroundColor: '#304FFE'
+                }]
+            },
+            options: {
+                legend: {
+                    display: false
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            suggestedMax: 500
+                        }
+                    }]
+                }
+            }
+        });
+        this.drawCurrent();
+    }
+
+    componentDidUpdate() {
+        this.drawCurrent();
+    }
+
+    drawCurrent() {
         var ctx = this.canvas.getContext('2d');
-        var data = this.props.current.map((e, i) => {
+        var data = this.state.current.map((e, i) => {
             return {
-                x: i,
-                y: e.value
+                x: this.state.current.length - i - 1,
+                y: e
             }
         });
         var myChart = new Chart(ctx, {
@@ -116,6 +163,16 @@ class Device_item extends React.Component {
         });
     }
 
+    delete() {
+        axios.get(API_URL + 'delete/device/' + this.props._id).then(response => {
+            alert('Xóa thành công!');
+            window.location.reload();
+        }).catch(err => {
+            alert('Xóa thất bại!');
+            window.location.reload();            
+        })
+    }
+
     render() {
         return (
             <div className="item">
@@ -134,6 +191,7 @@ class Device_item extends React.Component {
                     <div className="row">
                         <canvas className="chart" ref={can => {this.canvas2 = can}}></canvas>
                     </div>
+                    <div onClick={this.delete} className="delete">Xóa</div>
                 </div>
             </div>
         )
@@ -148,11 +206,9 @@ class Toggle extends React.Component {
     }
 
     handleClick() {
-        this.setState(prev => ({ on: !prev.on }));
-    }
-
-    componentDidUpdate() {
-        this.props.switch(this.state.on);
+        this.setState(prev => ({ on: !prev.on }), () => {
+            this.props.switch(this.state.on);
+        });
     }
 
     render() {

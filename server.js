@@ -186,6 +186,13 @@ client.on('message', function (topic, message) {
             	console.log("Not Matched");
         	}
             break;
+        case "ServerLocal/SyncDatabase":
+            if (json['Action']=="DeleteDevice"){
+                client.publish("Server/DeleteDevice",JSON.stringify({ID: json['Content']['ID']}));
+            } else
+            if (json['Action']=="DeleteRoom"){
+                client.publish("Server/DeleteRoom",JSON.stringify({ID: json['Content']['ID']}));
+            }
     }
 })
 

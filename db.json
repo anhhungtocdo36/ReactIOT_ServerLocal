@@ -19,25 +19,23 @@
   ],
   "roomDetail": [
     {
-      "active": "2",
-      "total": "2",
+      "active": "1",
+      "total": "1",
       "room_id": 2,
       "room_name": "Phòng khách"
     }
   ],
   "device": [
     {
-      "id": "456",
-      "name": "may giat",
-      "status": true,
-      "room_id": 2,
-      "timer_status": false
-    },
-    {
-      "id": "4060259",
-      "name": "may lanh",
-      "status": true,
-      "room_id": 2,
+      "id": "6564324",
+      "value": [
+        0
+      ],
+      "date": [
+        "2017-12-10T17:00:00.000Z"
+      ],
+      "name": "Máy lạnh",
+      "status": false,
       "timer_status": false
     }
   ]
