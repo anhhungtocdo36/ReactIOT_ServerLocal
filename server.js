@@ -11,6 +11,7 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var flash = require('connect-flash');
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
+var cron = require('cron').CronJob;
 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
@@ -123,9 +124,9 @@ io.on('connection', function (socket) {
         //client.publish('ServerLocal/Control', JSON.stringify(body));
         console.log("switch");
         for (var i = 0; i < clients.length; i++)
-            if (clients[i][1] == body['ID']) {
+            if (clients[i]['ID'] == body['ID']) {
                 var jsonControl = { "Status": body['Status'].toString() };
-                clients[i][0].send(JSON.stringify(jsonControl));
+                clients[i]['socket'].send(JSON.stringify(jsonControl));
             }
         client.subscribe('Server/Status',JSON.stringify(body));
     });
@@ -162,9 +163,9 @@ client.on('message', function (topic, message) {
     switch (topic) {
         case "ServerLocal/Control":
             for (var i = 0; i < clients.length; i++)
-                if (clients[i][1] == json['ID']) {
+                if (clients[i]['ID'] == json['ID']) {
                     var jsonControl = { "Status": json['Status'].toString() };
-                    clients[i][0].send(JSON.stringify(jsonControl), function(err,res){
+                    clients[i]['socket'].send(JSON.stringify(jsonControl), function(err,res){
                         if (err) throw err;
                     });
 
@@ -174,7 +175,7 @@ client.on('message', function (topic, message) {
         case "ServerLocal/CheckID":
         	var fCheck = false;
         	for (var i = 0; i < clients.length; i++)
-            	if (clients[i][1] == json['ID']) {
+            	if (clients[i]['ID'] == json['ID']) {
                 	client.publish('Server/CheckID', message);
                 	fCheck = true;
                 	console.log("Matched ID");
@@ -210,14 +211,14 @@ function broadcast(socket, data) {
 function UpdataStatusToServer(ID, status) {
     var dataStatus = { "ID": ID, "Status": status };
     client.publish('Server/Status', JSON.stringify(dataStatus));
+    // for (var i=0;i<socketLocalPage.length;i++)
+    //     socketLocalPage[i].emit('status',dataStatus);
 }
 
 function UpdateCurrentToServer(ID, value) {
     var dataCurrent = { "ID": ID, "value": Math.random()+4 };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
-    /*socketLocalPage.forEach(function(data){
-        data.emit('current', dataCurrent);
-    })*/
+    console.log("send data");
     
 }
 
@@ -232,8 +233,7 @@ function UpdatePowerToServer(ID, value) {
 }
 
 ws.on('connection', function (socket, req) {
-    var newData = [];
-    newData.push(socket);
+    var newData = {"ID": 0, "socket": socket, "power": 0, "nUpdate": 0};
     console.log("1 client connected")
     socket.on('updateData', function (data) {
         console.log('received: %s', data);
@@ -242,7 +242,7 @@ ws.on('connection', function (socket, req) {
     socket.on('close', function () {
         var index = -1;
         for (var i=0;i<clients.length;i++)
-        	if (clients[i][0]==socket){
+        	if (clients[i]['socket']==socket){
         		index = i;
         		break;
         	}
@@ -259,10 +259,10 @@ ws.on('connection', function (socket, req) {
         var json = JSON.parse(message);
         switch (json['Action']) {
             case 'ClientID':
-                newData.push(json['message']);
+                newData['ID'] = json['message'];
                 var fAdd = false;
                 for (var i = 0; i < clients.length; i++)
-                    if (clients[i][1] != json['message']) {
+                    if (clients[i]['ID'] != json['message']) {
                         fAdd = true;
                         break;
                     }
@@ -276,18 +276,30 @@ ws.on('connection', function (socket, req) {
                 console.log('Update Status from device ID: ' + json['message']['ID']);
                 UpdataStatusToServer(json['message']['ID'],json['message']['status']);
                 break;
-            case 'UpdateCurrent':
-                console.log('Update Current from device ID: ' + json['message']['ID'].toString());
-                UpdateCurrentToServer(json['message']['ID'], json['message']['value']);
-                break;
-            case 'UpdatePower':
-                console.log('Update Power from device ID: ' + json['message']['ID']);
-              	UpdatePowerToServer(json['message']['ID'], json['message']['value']);
+            case 'UpdateData':
+                console.log('Update Data from device ID: ' + json['message']['ID'].toString());
+                UpdateCurrentToServer(json['message']['ID'], json['message']['current']);
+                clients['power'] += json['message']['power'];
+                clients['nUpdate']++;
                 break;
         }
     })
 
 });
+
+var job = new cron('00 59 23 * * 1-7', function(){
+    console.log("Update Power to Server");
+    clients.forEach(function(data){
+        var dataPower = {'ID':data['ID'],'value':data['power']/data['nUpdate']};
+        client.publish('Server/UpdatePower',JSON.stringify(dataPower));
+    })
+},function(){
+    console.log("Update Power complete!!!");
+}, true, 'Asia/Ho_Chi_Minh')
+
+
+
+
 /*
 setInterval(function () { 
     var dataCurrent = {"ID":4060259,"value":Math.random()*(5)};
