@@ -222,16 +222,6 @@ function UpdateCurrentToServer(ID, value) {
     
 }
 
-// setInterval(function(){
-// 	var dataCurrent = { "ID": 4060259, "value": Math.random()+4 };
-// 	client.publish('Server/Current', JSON.stringify(dataCurrent));
-// },1000);
-
-function UpdatePowerToServer(ID, value) {
-    var dataPower = { "ID": ID, "time": new Date().toUTCString(), "value": value };
-    //client.publish('Server/Power', JSON.stringify(dataPower));
-}
-
 ws.on('connection', function (socket, req) {
     var newData = {"ID": 0, "socket": socket, "power": 0, "nUpdate": 0};
     console.log("1 client connected")
@@ -295,6 +285,10 @@ var job = new cron('00 59 23 * * 1-7', function(){
     })
 },function(){
     console.log("Update Power complete!!!");
+    clients.forEach(function(data){
+        data['power'] = 0;
+        data['nUpdate'] = 0;
+    })
 }, true, 'Asia/Ho_Chi_Minh')
 
 
