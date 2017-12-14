@@ -1,5 +1,5 @@
 {
     "terminal.integrated.env.linux": {
-        "PATH": "/home/toright/.platformio/penv/bin:/home/toright/Desktop/build_ardupilot/ardupilot/Tools/autotest:/opt/gcc-arm-none-eabi-4_9-2015q3/bin:/home/toright/bin:/home/toright/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/toright/esp/xtensa-esp32-elf/bin"
+        "PATH": "/home/toright/.platformio/penv/bin:/home/toright/Desktop/build_ardupilot/ardupilot/Tools/autotest:/opt/gcc-arm-none-eabi-4_9-2015q3/bin:/home/toright/bin:/home/toright/.local/bin:/home/toright/Desktop/build_ardupilot/ardupilot/Tools/autotest:/opt/gcc-arm-none-eabi-4_9-2015q3/bin:/home/toright/bin:/home/toright/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/toright/esp/xtensa-esp32-elf/bin:/home/toright/esp/xtensa-esp32-elf/bin"
     }
 }

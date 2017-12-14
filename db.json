@@ -12,121 +12,11 @@
     },
     {
       "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
-      "id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "userId": 1,
       "id": "bf3371018ee7ec875b8106471637fc8a",
       "room_name": "Phòng trà "
-    },
-    {
-      "userId": 1,
-      "id": "8b0cffe98f2a9f511d9fddf98e1b5080",
-      "room_name": "Phòng khách"
     }
   ],
   "roomDetail": [
-    {
-      "active": "0",
-      "total": "1",
-      "room_id": "8b0cffe98f2a9f511d9fddf98e1b5080",
-      "room_name": "Phòng khách"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
-    {
-      "active": "0",
-      "total": "0",
-      "room_id": "bff1c45cd30f0f56624c1e83e7e064ad",
-      "room_name": "Phòng ngủ"
-    },
     {
       "active": "0",
       "total": "0",
@@ -141,7 +31,7 @@
     },
     {
       "active": "0",
-      "total": "0",
+      "total": "2",
       "room_id": "8b0cffe98f2a9f511d9fddf98e1b5080",
       "room_name": "Phòng khách"
     }
@@ -161,6 +51,21 @@
       ],
       "date": [
         "Thu Dec 14 2017",
+        "Thu Dec 14 2017"
+      ]
+    },
+    {
+      "id": 8451817,
+      "name": "Đèn 2",
+      "status": false,
+      "room_id": "8b0cffe98f2a9f511d9fddf98e1b5080",
+      "userId": 1,
+      "timer_status": false,
+      "time": "00:00:00",
+      "value": [
+        0
+      ],
+      "date": [
         "Thu Dec 14 2017"
       ]
     }

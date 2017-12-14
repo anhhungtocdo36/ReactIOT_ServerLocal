@@ -150,7 +150,7 @@ class Device_item extends React.Component {
                 datasets: [{
                     data: data,
                     fill: false,
-                    borderColor: '#fff',
+                    borderColor: '#ff0',
                     cubicInterpolationMode: 'monotone'
                 }]
             },
@@ -160,12 +160,12 @@ class Device_item extends React.Component {
                         type: 'linear',
                         position: 'bottom',
                         ticks: {
-                            fontColor: '#fff',
+                            fontColor: '#000',
                         },
                     }],
                     yAxes: [{
                         ticks: {
-                            fontColor: '#fff',
+                            fontColor: '#000',
                             beginAtZero: true,
                             suggestedMax: 10
                         },
