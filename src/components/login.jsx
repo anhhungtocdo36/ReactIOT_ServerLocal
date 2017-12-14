@@ -42,13 +42,13 @@ export default class Login extends React.Component {
                             <label htmlFor="username">
                                 Tài khoản:
                             </label>
-                            <input type="text" name="username" id="username" placeholder="account1" onChange={this.handleInputChange}/>
+                            <input type="text" name="username" id="username" placeholder="" onChange={this.handleInputChange}/>
                         </div>
                         <div>
                             <label htmlFor="password">
                                 Mật khẩu:
                             </label>
-                            <input type="password" name="password" id="password" placeholder="z" onChange={this.handleInputChange}/>
+                            <input type="password" name="password" id="password" placeholder="" onChange={this.handleInputChange}/>
                         </div>
                         <div>
                             <input type="submit" value="Đăng nhập" />
