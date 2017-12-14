@@ -1,27 +1,15 @@
 {
   "room": [
     {
-      "id": 2,
+      "userId": 1,
+      "id": "8b0cffe98f2a9f511d9fddf98e1b5080",
       "room_name": "Phòng khách"
-    },
-    {
-      "id": 3,
-      "room_name": "Phòng bếp"
-    },
-    {
-      "id": 9,
-      "room_name": "Phòng tắm"
-    },
-    {
-      "id": 8,
-      "room_name": "Phòng ăn"
     }
   ],
   "roomDetail": [
     {
-      "active": "2",
-      "total": "2",
-      "room_id": 2,
+      "active": "0",
+      "total": "0",
       "room_name": "Phòng khách"
     }
   ],
