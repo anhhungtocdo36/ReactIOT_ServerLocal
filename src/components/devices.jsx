@@ -7,26 +7,34 @@ const socket = openSocket(API_URL);
 export default class Devices extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { current: [] };
         this.devices = [];
         this.dataFetched = false;
         this.fetchData = this.fetchData.bind(this);
         this.updateData = this.updateData.bind(this);
+        this.goBack = this.goBack.bind(this);
+        this.goForward = this.goForward.bind(this);
     }
 
     componentDidMount() {
         this.fetchData();
         document.title = "Thiết bị";
+        socket.on('switch', (data) => {
+            for(var i = 0; i < this.devices.length; i++) {
+                if(this.devices[i].id == data.ID)
+                    this.devices[i].status = parseInt(data.Status);
+            }
+            this.forceUpdate();
+        })
     }
 
     fetchData() {
-        var self = this;
+        let self = this;
         axios.get(API_URL + 'db/device/'+this.props.match.params.id, {
                 responseType: 'json'
             })
             .then(function (response) {
                 var data = response.data;
-                self.devices = data;
+                self.devices = data ? data : self.devices;
                 self.dataFetched = true;
                 self.forceUpdate();
                 socket.emit('subscribe', data.map(e => (e.id)));
@@ -38,7 +46,15 @@ export default class Devices extends React.Component {
 
     updateData(message, data) {
         socket.emit('switch', data);
-        console.log('Send HTTP: ' + data);
+        console.log('Send HTTP: ' + JSON.stringify(data));
+    }
+
+    goBack() {
+        this.props.history.goBack();
+    }
+
+    goForward() {
+        this.props.history.goForward();
     }
 
     render() {
@@ -47,7 +63,11 @@ export default class Devices extends React.Component {
         ) : <div className="loading">{this.dataFetched ? "Không có thiết bị" : "Đang tải..."}</div>;
         return (
             <div>
-                <h2>{this.props.match.params.name}</h2>
+                <div className="header">
+                    <div onClick={this.goBack}>&#8617;</div>
+                    <h2><span>{this.props.match.params.name}</span></h2>
+                    <div onClick={this.goForward}>&#8618;</div>
+                </div>
                 <div className="devices">
                     {item}
                 </div>
@@ -66,9 +86,8 @@ class Device_item extends React.Component {
     }
 
     switch(status) {
-        var self = this;
         this.props.updateData('demo/switch', {
-            ID: parseInt(self.props._id),
+            ID: parseInt(this.props._id),
             Status: status? '1':'0'
         });
     }
@@ -77,7 +96,7 @@ class Device_item extends React.Component {
         let self = this;
         socket.on('current', (data) => {
             this.setState(prev => {
-                if(data.ID == self.props._id)
+                if (data.ID == this.props._id)
                     return { current: [data.value, ...prev.current.slice(0, 48)] }
                 else
                     return
@@ -209,6 +228,11 @@ class Toggle extends React.Component {
         this.setState(prev => ({ on: !prev.on }), () => {
             this.props.switch(this.state.on);
         });
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if(nextProps != this.state.props)
+            this.setState({ on: nextProps.on });
     }
 
     render() {

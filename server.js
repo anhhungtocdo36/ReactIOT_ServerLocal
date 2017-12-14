@@ -110,11 +110,12 @@ app.get('/logout', function (req, res) {
 app.get('/db', ensureLoggedIn(), function (req, res) {
     const _res2 = db.get('room').value();
     const _res1 = db.get('roomDetail').value();
-    res.send({ data1: _res1, data2: _res2 });
+    res.send({ data1: _res1, data2: _res2, 'user':{'name':'Admin'}});
+    console.log()
 });
 
 app.get('/db/device/:id', ensureLoggedIn(), function (req, res) {
-    const _res = db.get('device').value();
+    var _res = db.get('device').value();
     res.send(_res);
 });
 /* 
@@ -168,6 +169,7 @@ client.on('connect', function () {
     client.subscribe('ServerLocal/Control');
     client.subscribe('ServerLocal/CheckID');
     client.subscribe('ServerLocal/SyncDatabase');
+    client.subscribe('ServerLocal/Timer');
 })
 
 // example Json: {"ID":1234,"Status":"0"}
@@ -224,7 +226,19 @@ client.on('message', function (topic, message) {
                   }
                 db.get('roomDetail').push(newRoomDetail).write();
                 client.publish("Server/AddRoom",JSON.stringify(json['Content']));
+            } else
+            if (json['Action']=="SyncRoomDetail"){
+                if (json['Content']['total']=="0")
+                    db.get('roomDetail')
+                      .remove(db.get('roomDetail').find({'room_id':json['Content']['room_id']}).value())
+                      .write();
+                else 
+                    db.get('roomDetail').set(json['Content']['roomDetail']);
             }
+            break;
+        case "ServerLocal/Timer": //{"id", "status", "time"}
+            break;
+            
     }
 })
 
@@ -356,3 +370,18 @@ setInterval(function () {
 */
 server.listen(8000);
 console.log('Server listening on port 8000');
+/*
+{ data1: [],
+    data2: 
+     [ anonymous {
+         id: '8b0cffe98f2a9f511d9fddf98e1b5080',
+         room_name: 'Phòng khách' } ],
+    user: 
+     anonymous {
+       id: 1,
+       name: 'user1',
+       account: 'account1                      ',
+       password: 'fbade9e36a3f36d3d676c1b808451dd7' } }
+]  
+
+*/

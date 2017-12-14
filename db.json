@@ -6,12 +6,22 @@
       "room_name": "Phòng khách"
     }
   ],
-  "roomDetail": [
+  "roomDetail": [],
+  "device": [
     {
-      "active": "0",
-      "total": "0",
-      "room_name": "Phòng khách"
+      "id": 8451817,
+      "name": "Đèn",
+      "status": false,
+      "room_id": "8b0cffe98f2a9f511d9fddf98e1b5080",
+      "userId": 1,
+      "timer_status": false,
+      "time": "00:00:00",
+      "value": [
+        0
+      ],
+      "date": [
+        "Thu Dec 14 2017"
+      ]
     }
-  ],
-  "device": []
+  ]
 }
