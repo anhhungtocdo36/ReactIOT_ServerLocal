@@ -31,6 +31,7 @@ var server = http.createServer(requestHandler);
 var ws = new WebSocket.Server({ server });
 var clients = [];
 var socketLocalPage = [];
+var timerJob = [];
 
 passport.use(new LocalStrategy({
     usernameField: 'username',
@@ -139,7 +140,6 @@ io.on('connection', function (socket) {
         var dataCurrent = {"ID":4060259,"value":Math.random()*(5)};
         socket.emit('current', dataCurrent);
     }, 1000);*/ 
-
     socket.on('subscribe', (data) => {
         data.forEach(e => {
           socket.join('Server/Status' + e);
@@ -149,7 +149,6 @@ io.on('connection', function (socket) {
           console.log('Join ' + e);
         });
       });
-
 });
 
 // MQTT
@@ -189,7 +188,7 @@ client.on('message', function (topic, message) {
             break;
         case "ServerLocal/CheckID":
         	var fCheck = false;
-        	/*for (var i = 0; i < clients.length; i++)
+        	for (var i = 0; i < clients.length; i++)
             	if (clients[i]['ID'] == json['ID']) {
                 	client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
                 	fCheck = true;
@@ -200,10 +199,10 @@ client.on('message', function (topic, message) {
         	if (!fCheck){
             	client.publish('Server/CheckID',JSON.stringify({ok:false}));
             	console.log("Not Matched");
-            }*/
-            client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
-            console.log("Matched ID");
-            db.get('device').push(json).write();
+            }
+            //client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
+            //console.log("Matched ID");
+            //db.get('device').push(json).write();
             break;
         case "ServerLocal/SyncDatabase":
             if (json['Action']=="DeleteDevice"){
@@ -221,7 +220,7 @@ client.on('message', function (topic, message) {
                 var newRoomDetail = {
                     "active": "0",
                     "total": "0",
-                    "room_id": json['Content']['ID'],
+                    "room_id": json['Content']['id'],
                     "room_name": json['Content']['room_name']
                   }
                 db.get('roomDetail').push(newRoomDetail).write();
@@ -233,10 +232,44 @@ client.on('message', function (topic, message) {
                       .remove(db.get('roomDetail').find({'room_id':json['Content']['room_id']}).value())
                       .write();
                 else 
-                    db.get('roomDetail').set(json['Content']['roomDetail']);
+                    db.set('roomDetail',json['Content']['roomDetail']).write();
             }
             break;
         case "ServerLocal/Timer": //{"id", "status", "time"}
+            var arr_time = json['time'].split(":");
+            //timerJob = new cron(arr_time[2]+" "+arr_time[1]+" "+arr_time[0])
+            var index = -1;
+            for (i = 0;i<clients.length;i++){
+                if (clients[i]['ID'] == json['id']){
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1){
+                if ((clients[index]['timer_status']==false) && (json['status']==true)){
+                    console.log("Set timer");
+                    var time = new Date();
+                    clients[index]['timer_status']=true;
+                    db.get('device').find({'id':json['id']}).assign({'timer_status':true}).write();
+                    time.setHours(parseInt(arr_time[0]),parseInt(arr_time[1]),parseInt(arr_time[2]));
+                    console.log(arr_time[2].toString()+" "+arr_time[1].toString()+" "+arr_time[0].toString()+" * * 1-7");
+                    clients[index]['timer'] = new cron(arr_time[2].toString()+" "+arr_time[1].toString()+" "+arr_time[0].toString()+" * * 1-7",
+                        function(){
+                            clients[index]['socket'].send(JSON.stringify({"Status":"0"}));
+                            //io.sockets.in("Server/Control" + json['id'].toString())
+                            //.emit('switch', {"status": "0"});
+                            UpdataStatusToServer(json['id'],0);
+                            this.stop();
+                        }, function(){
+                            db.get('device').find({'id':json['id']}).assign({'timer_status':false}).write();
+                            clients[index]['timer_status']==false;
+                            console.log("Completed");
+                        }, true, "Asia/Ho_Chi_Minh");
+                } else if ((clients[index]['timer_status']==true) && (json['status']==false)){
+                    console.log("Cancel Duty");
+                    clients[index]['timer'].stop();
+                }
+            }
             break;
             
     }
@@ -265,20 +298,27 @@ function UpdataStatusToServer(ID, status) {
     var dataStatus = { "ID": ID, "Status": status };
     client.publish('Server/Control', JSON.stringify(dataStatus));
     console.log("Send Status");
-    // for (var i=0;i<socketLocalPage.length;i++)
-    //     socketLocalPage[i].emit('status',dataStatus);
+    //io.sockets.in("Server/Control"+ID).emit('switch', dataStatus);
+    socketLocalPage.forEach(function(data){
+        data.emit('switch',dataStatus);
+    });
 }
 
 function UpdateCurrentToServer(ID, value) {
     var dataCurrent = { "ID": ID, "value": value };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
+    //io.sockets.in("Server/Current"+ID).emit('current', dataCurrent);    
+    socketLocalPage.forEach(function(data){
+        data.emit('current',dataCurrent);
+    });
     console.log("send data");
-    
 }
 
 ws.on('connection', function (socket, req) {
-    var newData = {"ID": 0, "socket": socket, "power": 0, "nUpdate": 0};
-    console.log("1 client connected")
+    var new_timer;
+    var newData = {"ID": 0, "socket": socket, "power": 0, "nUpdate": 0, "timer": new_timer
+                    , "timer_status": false};
+    console.log("1 client connected");
     socket.on('updateData', function (data) {
         console.log('received: %s', data);
     });
@@ -304,31 +344,36 @@ ws.on('connection', function (socket, req) {
         switch (json['Action']) {
             case 'ClientID':
                 newData['ID'] = json['message'];
-                var fAdd = false;
+                var fAdd = true;
                 for (var i = 0; i < clients.length; i++)
-                    if (clients[i]['ID'] != json['message']) {
-                        fAdd = true;
+                    if (clients[i]['ID'] == json['message']) {
+                        fAdd = false;
                         break;
                     }
-                if (fAdd || (clients.length == 0)) {
+                if (fAdd) {
                     clients.push(newData);
                     console.log('Number of Client: ' + clients.length);
-
                 }
                 break;
             case 'UpdateStatus':
                 console.log('Update Status from device ID: ' + json['message']['ID']);
                 UpdataStatusToServer(json['message']['ID'],json['message']['status']);
-                io.sockets.in("Server/Control" + json['message']['ID'].toString())
-                          .emit('switch', {"status": json['message']['status']});
+                //io.sockets.in("Server/Control" + json['message']['ID'].toString())
+                //          .emit('switch', {"ID":json['message']['ID'], "status": json['message']['status'].toString()});
                 break;
             case 'UpdateData':
                 console.log('Update Data from device ID: ' + json['message']['ID'].toString());
                 UpdateCurrentToServer(json['message']['ID'], json['message']['current']);
-                clients['power'] += json['message']['power'];
-                clients['nUpdate']++;
-                io.sockets.in("Server/Current" + json['message']['ID'].toString())
-                          .emit('current', {"value": json['message']['current']});
+                var index = -1;
+                for (var i=0;i<clients.length;i++)
+                    if (clients[i]['ID']==json['message']['ID']){
+                        index=i;
+                        break;
+                    }
+                if (index!=-1){
+                    clients[index]['power'] += json['message']['power'];
+                    clients[index]['nUpdate']++;        
+                }
                 break;
         }
     })

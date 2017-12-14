@@ -91,7 +91,6 @@ class Device_item extends React.Component {
             Status: status? '1':'0'
         });
     }
-
     componentDidMount() {
         let self = this;
         socket.on('current', (data) => {

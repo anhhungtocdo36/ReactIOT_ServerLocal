@@ -35,7 +35,7 @@ if (TARGET === 'start') {
         plugins: [
             new webpack.HotModuleReplacementPlugin(),  // This makes everything reloaded when you change files
             new webpack.DefinePlugin({
-                'API_URL': API_URL[1]
+                'API_URL': API_URL[0]
             })
         ]
     });
