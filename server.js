@@ -21,6 +21,9 @@ const db = low(adapter)
 db.defaults({ room: [], roomDetail: [], device: [] })
     .write();
 
+//db.get('device').remove(db.get('device').find({"id":"4060259"}).value()).write();
+    
+
 var app = express();
 const port = process.env.PORT || 3000;
 
@@ -127,6 +130,7 @@ io.on('connection', function (socket) {
             if (clients[i]['ID'] == body['ID']) {
                 var jsonControl = { "Status": body['Status'].toString() };
                 clients[i]['socket'].send(JSON.stringify(jsonControl));
+                console.log(JSON.stringify(jsonControl));
             }
         client.subscribe('Server/Status',JSON.stringify(body));
     });
@@ -164,34 +168,37 @@ client.on('message', function (topic, message) {
         case "ServerLocal/Control":
             for (var i = 0; i < clients.length; i++)
                 if (clients[i]['ID'] == json['ID']) {
-                    var jsonControl = { "Status": json['Status'].toString() };
-                    clients[i]['socket'].send(JSON.stringify(jsonControl), function(err,res){
-                        if (err) throw err;
-                    });
-
-            	}
-            client.publish('Server/Control',message);
+                    var jsonControl = { "Status": json['Status'] };
+                    clients[i]['socket'].send(JSON.stringify(jsonControl));
+                    console.log(JSON.stringify(jsonControl));
+                }
+            client.publish('Server/Control',message.toString());
             break;
         case "ServerLocal/CheckID":
         	var fCheck = false;
         	for (var i = 0; i < clients.length; i++)
             	if (clients[i]['ID'] == json['ID']) {
-                	client.publish('Server/CheckID', message);
+                	client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
                 	fCheck = true;
-                	console.log("Matched ID");
+                    console.log("Matched ID");
+                    db.get('device').push(json).write();
                 	break;
             	}
         	if (!fCheck){
-            	client.publish('Server/CheckID', 'ID not matched');
+            	client.publish('Server/CheckID',JSON.stringify({ok:false}));
             	console.log("Not Matched");
         	}
             break;
         case "ServerLocal/SyncDatabase":
             if (json['Action']=="DeleteDevice"){
+                db.get('device').remove(db.get('device').find({"id":json['Content']['ID']}).value()).write();
                 client.publish("Server/DeleteDevice",JSON.stringify({ID: json['Content']['ID']}));
             } else
             if (json['Action']=="DeleteRoom"){
                 client.publish("Server/DeleteRoom",JSON.stringify({ID: json['Content']['ID']}));
+            } else 
+            if (json['Action']=="AddRoom"){
+                client.publish("Server/AddRoom",JSON.stringify({ID: json['Content']['ID']}));
             }
     }
 })
@@ -217,13 +224,14 @@ function broadcast(socket, data) {
 
 function UpdataStatusToServer(ID, status) {
     var dataStatus = { "ID": ID, "Status": status };
-    client.publish('Server/Status', JSON.stringify(dataStatus));
+    client.publish('Server/Control', JSON.stringify(dataStatus));
+    console.log("Send Status");
     // for (var i=0;i<socketLocalPage.length;i++)
     //     socketLocalPage[i].emit('status',dataStatus);
 }
 
 function UpdateCurrentToServer(ID, value) {
-    var dataCurrent = { "ID": ID, "value": Math.random()+4 };
+    var dataCurrent = { "ID": ID, "value": value };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
     console.log("send data");
     
