@@ -187,7 +187,7 @@ client.on('message', function (topic, message) {
     switch (topic) {
         case "ServerLocal/Control":
             for (var i = 0; i < clients.length; i++)
-                if (clients[i]['ID'] == json['ID']) {
+                if (clients[i]['ID'].toString() == json['ID']) {
                     var jsonControl = { "Status": json['Status'] };
                     clients[i]['socket'].send(JSON.stringify(jsonControl));
                     console.log(JSON.stringify(jsonControl));
@@ -196,7 +196,8 @@ client.on('message', function (topic, message) {
             break;
         case "ServerLocal/CheckID":
         	var fCheck = false;
-        	for (var i = 0; i < clients.length; i++)
+            /*
+            for (var i = 0; i < clients.length; i++)
             	if (clients[i]['ID'] == json['ID']) {
                 	client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
                 	fCheck = true;
@@ -207,10 +208,10 @@ client.on('message', function (topic, message) {
         	if (!fCheck){
             	client.publish('Server/CheckID',JSON.stringify({ok:false}));
             	console.log("Not Matched");
-            }
-            //client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
-            //console.log("Matched ID");
-            //db.get('device').push(json).write();
+            }*/
+            client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
+            console.log("Matched ID");
+            db.get('device').push(json).write();
             break;
         case "ServerLocal/SyncDatabase":
             if (json['Action']=="DeleteDevice"){
@@ -305,7 +306,7 @@ function broadcast(socket, data) {
 function UpdataStatusToServer(ID, status) {
     var dataStatus = { "ID": ID, "Status": status };
     client.publish('Server/Control', JSON.stringify(dataStatus));
-    console.log("Send Status");
+    console.log('Server/Control', JSON.stringify(dataStatus));
     //io.sockets.in("Server/Control"+ID).emit('switch', dataStatus);
     socketLocalPage.forEach(function(data){
         data.emit('switch',dataStatus);
@@ -313,7 +314,7 @@ function UpdataStatusToServer(ID, status) {
 }
 
 function UpdateCurrentToServer(ID, value) {
-    var dataCurrent = { "ID": ID, "value": value };
+    var dataCurrent = { "ID": ID, "value": Math.random()+1 };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
     //io.sockets.in("Server/Current"+ID).emit('current', dataCurrent);    
     socketLocalPage.forEach(function(data){
@@ -366,6 +367,7 @@ ws.on('connection', function (socket, req) {
             case 'UpdateStatus':
                 console.log('Update Status from device ID: ' + json['message']['ID']);
                 UpdataStatusToServer(json['message']['ID'],json['message']['status']);
+                client.publish('Server/Control',message.toString());
                 //io.sockets.in("Server/Control" + json['message']['ID'].toString())
                 //          .emit('switch', {"ID":json['message']['ID'], "status": json['message']['status'].toString()});
                 break;
