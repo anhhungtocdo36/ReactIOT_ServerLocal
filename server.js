@@ -116,7 +116,8 @@ app.get('/db', ensureLoggedIn(), function (req, res) {
 });
 
 app.get('/db/device/:id', ensureLoggedIn(), function (req, res) {
-    var _res = db.get('device').value();
+    var _res = db.get('device').find({"room_id":req.params.id}).value();
+    console.log(_res);
     res.send(_res);
 });
 /* 
