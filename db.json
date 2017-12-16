@@ -46,8 +46,8 @@
       "timer_status": false,
       "time": "00:00:00",
       "value": [
-        0,
-        0
+        300,
+        270
       ],
       "date": [
         "Thu Dec 14 2017",
@@ -63,8 +63,8 @@
       "timer_status": false,
       "time": "00:00:00",
       "value": [
-        0,
-        0
+        150,
+        230
       ],
       "date": [
         "Thu Dec 14 2017",
