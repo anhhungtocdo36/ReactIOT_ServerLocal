@@ -22,7 +22,7 @@ db.defaults({ room: [], roomDetail: [], device: [] })
     .write();
 
 //db.get('device').remove(db.get('device').find({"id":"4060259"}).value()).write();
-    
+
 
 var app = express();
 const port = process.env.PORT || 3000;
@@ -111,7 +111,7 @@ app.get('/logout', function (req, res) {
 app.get('/db', ensureLoggedIn(), function (req, res) {
     const _res2 = db.get('room').value();
     const _res1 = db.get('roomDetail').value();
-    res.send({ data1: _res1, data2: _res2, 'user':{'name':'Admin'}});
+    res.send({ data1: _res1, data2: _res2, 'user': { 'name': 'Admin' } });
     console.log()
 });
 
@@ -121,8 +121,8 @@ app.get('/db/device/:id', ensureLoggedIn(), function (req, res) {
     console.log(devices);
     var _res = [];
     //db.set('device',_res).write();
-    for(var i=devices.length-1;i>=0;i--)
-        if (devices[i]['room_id']==req.params.id)
+    for (var i = devices.length - 1; i >= 0; i--)
+        if (devices[i]['room_id'] == req.params.id)
             _res.push(devices[i]);
     console.log(_res);
     res.send(_res);
@@ -142,21 +142,23 @@ io.on('connection', function (socket) {
                 clients[i]['socket'].send(JSON.stringify(jsonControl));
                 console.log(JSON.stringify(jsonControl));
             }
-        client.subscribe('Server/Status',JSON.stringify(body));
+        //console.log(JSON.stringify(body));
+        //{"ID":8451817,"Status":"0"}
+        client.publish('Server/Control', JSON.stringify(body));
     });
     /*setInterval(function () { 
         var dataCurrent = {"ID":4060259,"value":Math.random()*(5)};
         socket.emit('current', dataCurrent);
-    }, 1000);*/ 
+    }, 1000);*/
     socket.on('subscribe', (data) => {
         data.forEach(e => {
-          socket.join('Server/Status' + e);
-          socket.join('Server/Current' + e);
-          socket.join('Server/Power' + e);
-          socket.join('Server/Control' + e);
-          console.log('Join ' + e);
+            socket.join('Server/Status' + e);
+            socket.join('Server/Current' + e);
+            socket.join('Server/Power' + e);
+            socket.join('Server/Control' + e);
+            console.log('Join ' + e);
         });
-      });
+    });
 });
 
 // MQTT
@@ -192,94 +194,98 @@ client.on('message', function (topic, message) {
                     clients[i]['socket'].send(JSON.stringify(jsonControl));
                     console.log(JSON.stringify(jsonControl));
                 }
-            client.publish('Server/Control',message.toString());
+            client.publish('Server/Control', message.toString());
+            var dataStatus = { "ID": 4060259, "Status": parseInt(json['Status']) };
+            socketLocalPage.forEach(function (data) {
+                data.emit('switch', dataStatus);
+            });
             break;
         case "ServerLocal/CheckID":
-        	var fCheck = false;
-        	for (var i = 0; i < clients.length; i++)
-            	if (clients[i]['ID'] == json['ID']) {
-                	client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
-                	fCheck = true;
+            var fCheck = false;
+            for (var i = 0; i < clients.length; i++)
+                if (clients[i]['ID'] == json['ID']) {
+                    client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, { ok: true })));
+                    fCheck = true;
                     console.log("Matched ID");
                     db.get('device').push(json).write();
-                	break;
-            	}
-        	if (!fCheck){
-            	client.publish('Server/CheckID',JSON.stringify({ok:false}));
-            	console.log("Not Matched");
+                    break;
+                }
+            if (!fCheck) {
+                client.publish('Server/CheckID', JSON.stringify({ ok: false }));
+                console.log("Not Matched");
             }
             //client.publish('Server/CheckID', JSON.stringify(Object.assign({}, json, {ok: true})));
             //console.log("Matched ID");
             //db.get('device').push(json).write();
             break;
         case "ServerLocal/SyncDatabase":
-            if (json['Action']=="DeleteDevice"){
-                db.get('device').remove(db.get('device').find({"id":json['Content']['ID']}).value()).write();
-                client.publish("Server/DeleteDevice",JSON.stringify({ID: json['Content']['ID']}));
+            if (json['Action'] == "DeleteDevice") {
+                db.get('device').remove(db.get('device').find({ "id": json['Content']['ID'] }).value()).write();
+                client.publish("Server/DeleteDevice", JSON.stringify({ ID: json['Content']['ID'] }));
             } else
-            if (json['Action']=="DeleteRoom"){
-                client.publish("Server/DeleteRoom",JSON.stringify({ID: json['Content']['ID']}));
-                db.get('room').remove(db.get('room').find({'id':json['Content']['ID']}).value()).write();
-                db.get('device').remove(db.get('device').find({'room_id':json['Content']['ID']}).value()).write();
-                db.get('roomDetail').remove(db.get('roomDetail').find({'room_id':json['Content']['ID']}).value()).write();
-            } else 
-            if (json['Action']=="AddRoom"){
-                db.get('room').push(json['Content']).write();
-                var newRoomDetail = {
-                    "active": "0",
-                    "total": "0",
-                    "room_id": json['Content']['id'],
-                    "room_name": json['Content']['room_name']
-                  }
-                db.get('roomDetail').push(newRoomDetail).write();
-                client.publish("Server/AddRoom",JSON.stringify(json['Content']));
-            } else
-            if (json['Action']=="SyncRoomDetail"){
-                if (json['Content']['total']=="0")
-                    db.get('roomDetail')
-                      .remove(db.get('roomDetail').find({'room_id':json['Content']['room_id']}).value())
-                      .write();
-                else 
-                    db.set('roomDetail',json['Content']['roomDetail']).write();
-            }
+                if (json['Action'] == "DeleteRoom") {
+                    client.publish("Server/DeleteRoom", JSON.stringify({ ID: json['Content']['ID'] }));
+                    db.get('room').remove(db.get('room').find({ 'id': json['Content']['ID'] }).value()).write();
+                    db.get('device').remove(db.get('device').find({ 'room_id': json['Content']['ID'] }).value()).write();
+                    db.get('roomDetail').remove(db.get('roomDetail').find({ 'room_id': json['Content']['ID'] }).value()).write();
+                } else
+                    if (json['Action'] == "AddRoom") {
+                        db.get('room').push(json['Content']).write();
+                        var newRoomDetail = {
+                            "active": "0",
+                            "total": "0",
+                            "room_id": json['Content']['id'],
+                            "room_name": json['Content']['room_name']
+                        }
+                        db.get('roomDetail').push(newRoomDetail).write();
+                        client.publish("Server/AddRoom", JSON.stringify(json['Content']));
+                    } else
+                        if (json['Action'] == "SyncRoomDetail") {
+                            if (json['Content']['total'] == "0")
+                                db.get('roomDetail')
+                                    .remove(db.get('roomDetail').find({ 'room_id': json['Content']['room_id'] }).value())
+                                    .write();
+                            else
+                                db.set('roomDetail', json['Content']['roomDetail']).write();
+                        }
             break;
         case "ServerLocal/Timer": //{"id", "status", "time"}
             var arr_time = json['time'].split(":");
             //timerJob = new cron(arr_time[2]+" "+arr_time[1]+" "+arr_time[0])
             var index = -1;
-            for (i = 0;i<clients.length;i++){
-                if (clients[i]['ID'] == json['id']){
+            for (i = 0; i < clients.length; i++) {
+                if (clients[i]['ID'] == json['id']) {
                     index = i;
                     break;
                 }
             }
-            if (index != -1){
-                if ((clients[index]['timer_status']==false) && (json['status']==true)){
+            if (index != -1) {
+                if ((clients[index]['timer_status'] == false) && (json['status'] == true)) {
                     console.log("Set timer");
                     var time = new Date();
-                    clients[index]['timer_status']=true;
-                    db.get('device').find({'id':json['id']}).assign({'timer_status':true}).write();
-                    time.setHours(parseInt(arr_time[0]),parseInt(arr_time[1]),parseInt(arr_time[2]));
-                    console.log(arr_time[2].toString()+" "+arr_time[1].toString()+" "+arr_time[0].toString()+" * * 1-7");
-                    clients[index]['timer'] = new cron(arr_time[2].toString()+" "+arr_time[1].toString()+" "+arr_time[0].toString()+" * * 1-7",
-                        function(){
-                            clients[index]['socket'].send(JSON.stringify({"Status":"0"}));
+                    clients[index]['timer_status'] = true;
+                    db.get('device').find({ 'id': json['id'] }).assign({ 'timer_status': true }).write();
+                    time.setHours(parseInt(arr_time[0]), parseInt(arr_time[1]), parseInt(arr_time[2]));
+                    console.log(arr_time[2].toString() + " " + arr_time[1].toString() + " " + arr_time[0].toString() + " * * 1-7");
+                    clients[index]['timer'] = new cron(arr_time[2].toString() + " " + arr_time[1].toString() + " " + arr_time[0].toString() + " * * 1-7",
+                        function () {
+                            clients[index]['socket'].send(JSON.stringify({ "Status": "0" }));
                             //io.sockets.in("Server/Control" + json['id'].toString())
                             //.emit('switch', {"status": "0"});
-                            UpdataStatusToServer(json['id'],0);
+                            UpdataStatusToServer(json['id'], 0);
                             this.stop();
-                        }, function(){
-                            db.get('device').find({'id':json['id']}).assign({'timer_status':false}).write();
-                            clients[index]['timer_status']==false;
+                        }, function () {
+                            db.get('device').find({ 'id': json['id'] }).assign({ 'timer_status': false }).write();
+                            clients[index]['timer_status'] == false;
                             console.log("Completed");
                         }, true, "Asia/Ho_Chi_Minh");
-                } else if ((clients[index]['timer_status']==true) && (json['status']==false)){
+                } else if ((clients[index]['timer_status'] == true) && (json['status'] == false)) {
                     console.log("Cancel Duty");
                     clients[index]['timer'].stop();
                 }
             }
             break;
-            
+
     }
 })
 
@@ -307,8 +313,8 @@ function UpdataStatusToServer(ID, status) {
     client.publish('Server/Control', JSON.stringify(dataStatus));
     console.log("Send Status");
     //io.sockets.in("Server/Control"+ID).emit('switch', dataStatus);
-    socketLocalPage.forEach(function(data){
-        data.emit('switch',dataStatus);
+    socketLocalPage.forEach(function (data) {
+        data.emit('switch', dataStatus);
     });
 }
 
@@ -316,16 +322,18 @@ function UpdateCurrentToServer(ID, value) {
     var dataCurrent = { "ID": ID, "value": value };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
     //io.sockets.in("Server/Current"+ID).emit('current', dataCurrent);    
-    socketLocalPage.forEach(function(data){
-        data.emit('current',dataCurrent);
+    socketLocalPage.forEach(function (data) {
+        data.emit('current', dataCurrent);
     });
     console.log("send data");
 }
 
 ws.on('connection', function (socket, req) {
     var new_timer;
-    var newData = {"ID": 0, "socket": socket, "power": 0, "nUpdate": 0, "timer": new_timer
-                    , "timer_status": false};
+    var newData = {
+        "ID": 0, "socket": socket, "power": 0, "nUpdate": 0, "timer": new_timer
+        , "timer_status": false
+    };
     console.log("1 client connected");
     socket.on('updateData', function (data) {
         console.log('received: %s', data);
@@ -333,18 +341,18 @@ ws.on('connection', function (socket, req) {
 
     socket.on('close', function () {
         var index = -1;
-        for (var i=0;i<clients.length;i++)
-        	if (clients[i]['socket']==socket){
-        		index = i;
-        		break;
-        	}
-        if (index==-1) 
-        	return;
-        else 
-        	clients.splice(index, 1);
+        for (var i = 0; i < clients.length; i++)
+            if (clients[i]['socket'] == socket) {
+                index = i;
+                break;
+            }
+        if (index == -1)
+            return;
+        else
+            clients.splice(index, 1);
         console.log('disconnected');
     });
-    
+
 
     socket.on('message', function (message) {
         console.log(message);
@@ -365,7 +373,7 @@ ws.on('connection', function (socket, req) {
                 break;
             case 'UpdateStatus':
                 console.log('Update Status from device ID: ' + json['message']['ID']);
-                UpdataStatusToServer(json['message']['ID'],json['message']['status']);
+                UpdataStatusToServer(json['message']['ID'], json['message']['status']);
                 //io.sockets.in("Server/Control" + json['message']['ID'].toString())
                 //          .emit('switch', {"ID":json['message']['ID'], "status": json['message']['status'].toString()});
                 break;
@@ -373,14 +381,14 @@ ws.on('connection', function (socket, req) {
                 console.log('Update Data from device ID: ' + json['message']['ID'].toString());
                 UpdateCurrentToServer(json['message']['ID'], json['message']['current']);
                 var index = -1;
-                for (var i=0;i<clients.length;i++)
-                    if (clients[i]['ID']==json['message']['ID']){
-                        index=i;
+                for (var i = 0; i < clients.length; i++)
+                    if (clients[i]['ID'] == json['message']['ID']) {
+                        index = i;
                         break;
                     }
-                if (index!=-1){
+                if (index != -1) {
                     clients[index]['power'] += json['message']['power'];
-                    clients[index]['nUpdate']++;        
+                    clients[index]['nUpdate']++;
                 }
                 break;
         }
@@ -388,25 +396,25 @@ ws.on('connection', function (socket, req) {
 
 });
 
-var job = new cron('00 59 23 * * 1-7', function(){
+var job = new cron('00 59 23 * * 1-7', function () {
     console.log("Update Power to Server");
-    clients.forEach(function(data){
+    clients.forEach(function (data) {
         var avgPower = 0;
-        if (data['nUpdate']!=0)
-            avgPower = data['power']/data['nUpdate'];
-        var dataPower = {'ID':data['ID'],'value':avgPower};
-        client.publish('Server/UpdatePower',JSON.stringify(dataPower));
+        if (data['nUpdate'] != 0)
+            avgPower = data['power'] / data['nUpdate'];
+        var dataPower = { 'ID': data['ID'], 'value': avgPower };
+        client.publish('Server/UpdatePower', JSON.stringify(dataPower));
         io.sockets.in("Server/Power" + data['ID'].toString())
-                  .emit('power', {"value": avgPower});
-        var deviceSel = db.get('device').find({'id':data['ID']}).value();
+            .emit('power', { "value": avgPower });
+        var deviceSel = db.get('device').find({ 'id': data['ID'] }).value();
         deviceSel['value'].push(avgPower);
         deviceSel['date'].push(new Date().toDateString());
-        db.get('device').find({'id':data['ID']}).assign(deviceSel).write();
+        db.get('device').find({ 'id': data['ID'] }).assign(deviceSel).write();
     })
-    
-},function(){
+
+}, function () {
     console.log("Update Power complete!!!");
-    clients.forEach(function(data){
+    clients.forEach(function (data) {
         data['power'] = 0;
         data['nUpdate'] = 0;
     })
@@ -436,5 +444,4 @@ console.log('Server listening on port 8000');
        account: 'account1                      ',
        password: 'fbade9e36a3f36d3d676c1b808451dd7' } }
 ]  
-
 */
