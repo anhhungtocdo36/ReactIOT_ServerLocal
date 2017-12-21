@@ -319,7 +319,7 @@ function UpdataStatusToServer(ID, status) {
 }
 
 function UpdateCurrentToServer(ID, value) {
-    var dataCurrent = { "ID": ID, "value": value };
+    var dataCurrent = { "ID": ID, "value": Math.random()+1 };
     client.publish('Server/Current', JSON.stringify(dataCurrent));
     //io.sockets.in("Server/Current"+ID).emit('current', dataCurrent);    
     socketLocalPage.forEach(function (data) {
